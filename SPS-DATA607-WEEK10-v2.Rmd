@@ -1,0 +1,106 @@
+---
+title: "SPS-DATA607-WEEK10 - Sentiment Analysis"
+author: "Tage N Singh"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: hpstr
+    highlight: github
+---
+
+```yaml
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+```
+
+## Setup 
+
+```{r setup}
+library(tidytext)
+library(janeaustenr)
+library(stringr)
+library(rvest)
+library(leaflet)
+library(RColorBrewer)
+library(scrapeR)
+library(dplyr)
+library(ggmap)
+library(gutenbergr)
+library(wordcloud)
+```
+
+```{r afinn}
+
+
+get_sentiments("afinn")
+
+
+```
+
+```{r bing}
+
+get_sentiments("bing")
+
+
+```
+
+```{r nrc, echo=TRUE}
+
+get_sentiments("nrc")
+
+
+```
+For our Sentiment analysis we will use the Gutenberg Library and examine 
+some of **Henry Wadsworth Longfellow's** work.
+
+```{r gutenberg}
+
+hwl_books <- c("5436","23332","25153")
+
+
+hwl_books_download <- gutenberg_download(hwl_books)
+
+
+tidy_books <- hwl_books_download %>%
+  group_by(hwl_books_download$gutenberg_id) %>%
+  mutate(
+    linenumber = row_number(),
+    chapter = cumsum(str_detect(text, 
+                                regex("^chapter [\\divxlc]", 
+                                      ignore_case = TRUE)))) %>%
+  ungroup() %>%
+  unnest_tokens(word, text)
+
+
+data("stop_words")
+
+tidy_books <- tidy_books %>%
+  anti_join(stop_words)
+
+
+tidy_books %>%
+  count(word, sort = TRUE)
+
+
+tidy_books %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 100) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(n, word)) +
+  geom_col() +
+  labs(y = NULL)
+
+
+
+tidy_books %>%
+  count(word) %>%
+  with(wordcloud(word, n, max.words = 100))
+
+
+
+
+```
+
+
